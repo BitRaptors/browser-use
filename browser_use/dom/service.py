@@ -183,6 +183,8 @@ class DomService:
 			is_top_element=node_data.get('isTopElement', False),
 			highlight_index=node_data.get('highlightIndex'),
 			shadow_root=node_data.get('shadowRoot', False),
+			is_cross_oirigin_iframe=node_data.get('crossOriginIframe', False),
+			id=node_data.get('id', None),
 			parent=parent,
 			viewport_coordinates=viewport_coordinates,
 			page_coordinates=page_coordinates,
