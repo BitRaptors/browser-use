@@ -48,6 +48,8 @@ class DOMElementNode(DOMBaseNode):
 	viewport_coordinates: Optional[CoordinateSet] = None
 	page_coordinates: Optional[CoordinateSet] = None
 	viewport_info: Optional[ViewportInfo] = None
+	is_cross_oirigin_iframe: bool = False
+	id: str = ""
 
 	def __repr__(self) -> str:
 		tag_str = f'<{self.tag_name}'
