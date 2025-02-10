@@ -50,10 +50,59 @@ class DomService:
 		}
 
 		eval_page = await self.page.evaluate(js_code, args)  # This is quite big, so be careful
+  
 		html_to_dict = self._parse_node(eval_page)
+
+		def find_cross_origin_iframes(node: DOMElementNode) -> list[DOMElementNode]:
+			iframes = []
+			
+			if node.is_cross_oirigin_iframe:
+				iframes.append(node)
+			
+			for child in node.children:
+				if isinstance(child, DOMElementNode):
+					iframes.extend(find_cross_origin_iframes(child))
+			
+			return iframes
+
+
 
 		if html_to_dict is None or not isinstance(html_to_dict, DOMElementNode):
 			raise ValueError('Failed to parse HTML to dictionary')
+ 
+		cross_origin_iframes = find_cross_origin_iframes(html_to_dict)
+  
+		for iframe in cross_origin_iframes: 
+			frame = self.page.frame(iframe.id)
+			if frame is not None:
+				# Run JavaScript inside the iframe
+				result = await frame.evaluate(js_code, args)
+				# Parse the iframe content and add it as children
+				if result:
+					iframe_dom = self._parse_node(result)
+					if iframe_dom:
+						# Find the corresponding iframe node in html_to_dict
+						if iframe.id:
+							def find_iframe_node(node: DOMElementNode) -> Optional[DOMElementNode]:
+								if node.id == iframe.id:
+									return node
+								for child in node.children:
+									if isinstance(child, DOMElementNode):
+										result = find_iframe_node(child)
+										if result:
+											return result
+								return None
+
+							iframe_node = find_iframe_node(html_to_dict)
+							if iframe_node:
+								# Set parent reference for iframe_dom
+								if isinstance(iframe_dom, DOMElementNode):
+									iframe_dom.parent = iframe_node
+									# Replace existing children with iframe content
+									iframe_node.children = [iframe_dom]
+
+		else:
+			print("Iframe not found")
 
 		return html_to_dict
 

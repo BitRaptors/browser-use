@@ -635,7 +635,13 @@
           nodeData.children.push(...iframeChildren);
         }
       } catch (e) {
-        console.warn("Unable to access iframe:", node);
+        if (e instanceof DOMException && e.name === "SecurityError") {
+          console.warn("Cross-origin iframe access blocked:", node);
+          nodeData.crossOriginIframe = true;
+          nodeData.id = node.id;
+        } else {
+          console.error("Unexpected error accessing iframe:", e);
+        }
       }
     } else {
       const children = Array.from(node.childNodes).map((child) =>
@@ -646,6 +652,6 @@
 
     return nodeData;
   }
-
+  console.log("building dom tree...");
   return buildDomTree(document.body);
 };
