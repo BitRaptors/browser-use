@@ -218,7 +218,7 @@ class BrowserContext:
 
 	def _add_new_page_listener(self, context: PlaywrightBrowserContext):
 		async def on_page(page: Page):
-			await page.wait_for_load_state()
+			await page.wait_for_load_state(state='load')
 			logger.debug(f'New page opened: {page.url}')
 			if self.session is not None:
 				self.session.current_page = page
@@ -547,14 +547,12 @@ class BrowserContext:
 			raise BrowserError(f'Navigation to non-allowed URL: {url}')
 
 		page = await self.get_current_page()
-		await page.goto(url)
-		await page.wait_for_load_state(timeout=DEFAULT_TIMEOUT_MS)
+		await page.goto(url, wait_until='load')
 
 	async def refresh_page(self):
 		"""Refresh the current page"""
 		page = await self.get_current_page()
-		await page.reload()
-		await page.wait_for_load_state(timeout=DEFAULT_TIMEOUT_MS)
+		await page.reload(wait_until='load')
 
 	async def go_back(self):
 		"""Navigate back in history"""
@@ -927,7 +925,7 @@ class BrowserContext:
 			await element_handle.scroll_into_view_if_needed(timeout=2500)
 			await element_handle.fill('')
 			await element_handle.type(text)
-			await page.wait_for_load_state(timeout=DEFAULT_TIMEOUT_MS)
+			await page.wait_for_load_state()
 
 		except Exception as e:
 			raise Exception(f'Failed to input text into element: {repr(element_node)}. Error: {str(e)}')
@@ -965,12 +963,12 @@ class BrowserContext:
 					except TimeoutError:
 						# If no download is triggered, treat as normal click
 						logger.debug('No download triggered within timeout. Checking navigation...')
-						await page.wait_for_load_state(timeout=DEFAULT_TIMEOUT_MS)
+						await page.wait_for_load_state()
 						await self._check_and_handle_navigation(page)
 				else:
 					# Standard click logic if no download is expected
 					await click_func()
-					await page.wait_for_load_state(timeout=DEFAULT_TIMEOUT_MS)
+					await page.wait_for_load_state(state='load')
 					await self._check_and_handle_navigation(page)
 
 			try:
@@ -1021,7 +1019,7 @@ class BrowserContext:
 		session.current_page = page
 
 		await page.bring_to_front()
-		await page.wait_for_load_state(timeout=DEFAULT_TIMEOUT_MS)
+		await page.wait_for_load_state()
 
 	async def create_new_tab(self, url: str | None = None) -> None:
 		"""Create a new tab and optionally navigate to a URL"""
@@ -1037,7 +1035,7 @@ class BrowserContext:
 		page = await self.get_current_page()
 
 		if url:
-			await page.goto(url)
+			await page.goto(url, wait_until='load')
 			await self._wait_for_page_and_frames_load(timeout_overwrite=1)
 
 	# endregion
