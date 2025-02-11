@@ -652,6 +652,8 @@
 
     return nodeData;
   }
-  console.log("building dom tree...");
+  document
+    .querySelectorAll("#playwright-highlight-container")
+    .forEach((div) => div.remove());
   return buildDomTree(document.body);
 };
