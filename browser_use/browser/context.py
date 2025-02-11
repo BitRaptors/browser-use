@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Define a constant for the timeout duration
-DEFAULT_TIMEOUT_MS = 600000  # 60 seconds in milliseconds
+DEFAULT_TIMEOUT_MS = 0  # 60 seconds in milliseconds 600000
 
 class BrowserContextWindowSize(TypedDict):
 	width: int
