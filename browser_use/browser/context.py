@@ -218,7 +218,7 @@ class BrowserContext:
 
 	def _add_new_page_listener(self, context: PlaywrightBrowserContext):
 		async def on_page(page: Page):
-			await page.wait_for_load_state(state='load')
+			await page.wait_for_load_state(state='domcontentloaded')
 			logger.debug(f'New page opened: {page.url}')
 			if self.session is not None:
 				self.session.current_page = page
@@ -547,12 +547,12 @@ class BrowserContext:
 			raise BrowserError(f'Navigation to non-allowed URL: {url}')
 
 		page = await self.get_current_page()
-		await page.goto(url, wait_until='load')
+		await page.goto(url, wait_until='domcontentloaded')
 
 	async def refresh_page(self):
 		"""Refresh the current page"""
 		page = await self.get_current_page()
-		await page.reload(wait_until='load')
+		await page.reload(wait_until='domcontentloaded')
 
 	async def go_back(self):
 		"""Navigate back in history"""
@@ -968,7 +968,7 @@ class BrowserContext:
 				else:
 					# Standard click logic if no download is expected
 					await click_func()
-					await page.wait_for_load_state(state='load')
+					await page.wait_for_load_state(state='domcontentloaded')
 					await self._check_and_handle_navigation(page)
 
 			try:
@@ -1035,7 +1035,7 @@ class BrowserContext:
 		page = await self.get_current_page()
 
 		if url:
-			await page.goto(url, wait_until='load')
+			await page.goto(url, wait_until='domcontentloaded')
 			await self._wait_for_page_and_frames_load(timeout_overwrite=1)
 
 	# endregion
