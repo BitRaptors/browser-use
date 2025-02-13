@@ -119,6 +119,7 @@ class Controller:
 				return ActionResult(extracted_content=msg, include_in_memory=True)
 			except Exception as e:
 				logger.warning(f'Element not clickable with index {params.index} - most likely the page changed')
+				logger.info(f"Causing error: {e}", exc_info=True)
 				return ActionResult(error=str(e))
 
 		@self.registry.action(

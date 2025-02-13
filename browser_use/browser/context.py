@@ -978,7 +978,7 @@ class BrowserContext:
 				raise e
 			except Exception:
 				try:
-					return await perform_click(lambda: page.evaluate('(el) => el.click()', element_handle))
+					return await perform_click(lambda: element_handle.evaluate('(el) => el.click()', element_handle))
 				except URLNotAllowedError as e:
 					raise e
 				except Exception as e:
