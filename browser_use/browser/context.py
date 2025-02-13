@@ -972,17 +972,92 @@ class BrowserContext:
 					await page.wait_for_load_state()
 					await self._check_and_handle_navigation(page)
 
+			# Try multiple click strategies
 			try:
-				return await perform_click(lambda: element_handle.click(timeout=1500))
-			except URLNotAllowedError as e:
-				raise e
-			except Exception:
+				# Strategy 1: Standard click with proper preparation
+				await element_handle.wait_for_element_state('stable')
+				await element_handle.scroll_into_view_if_needed()
+				await page.wait_for_timeout(100)  # Small delay for hydration
+				return await perform_click(lambda: element_handle.click(
+					delay=50,  # Add slight delay between down and up
+					timeout=2500,
+					force=True  # Bypass actionability checks
+				))
+			except Exception as e1:
+				logger.debug(f'Standard click failed: {e1}')
 				try:
-					return await perform_click(lambda: element_handle.evaluate('(el) => el.click()', element_handle))
-				except URLNotAllowedError as e:
-					raise e
-				except Exception as e:
-					raise Exception(f'Failed to click element: {str(e)}')
+					# Strategy 2: JavaScript click
+					return await perform_click(
+						lambda: element_handle.evaluate('''(element) => {
+							// Dispatch both events for better compatibility
+							element.dispatchEvent(new MouseEvent('click', {
+								view: window,
+								bubbles: true,
+								cancelable: true,
+								buttons: 1
+							}));
+							element.click();
+						}''')
+					)
+				except Exception as e2:
+					logger.debug(f'JavaScript click failed: {e2}')
+					# try:
+					# Strategy 3: Focus + Enter key
+					await element_handle.focus()
+					return await perform_click(
+						lambda: page.keyboard.press('Enter')
+					)
+					# except Exception as e3:
+					# 	# Strategy 4: Most aggressive approach
+					# 	return await perform_click(
+					# 		lambda: page.evaluate('''(selector) => {
+					# 			const element = document.evaluate(
+					# 				selector,
+					# 				document,
+					# 				null,
+					# 				XPathResult.FIRST_ORDERED_NODE_TYPE,
+					# 				null
+					# 			).singleNodeValue;
+					# 			if (element) {
+					# 				// Remove pointer events from overlay elements
+					# 				const rect = element.getBoundingClientRect();
+					# 				const x = rect.left + rect.width / 2;
+					# 				const y = rect.top + rect.height / 2;
+					# 				const elements = document.elementsFromPoint(x, y);
+									
+					# 				elements.forEach(el => {
+					# 					if (el !== element) {
+					# 						el.style.pointerEvents = 'none';
+					# 					}
+					# 				});
+
+					# 				// Try multiple click approaches
+					# 				try {
+					# 					element.click();
+					# 				} catch (e) {
+					# 					// Backup: create and dispatch mouse events
+					# 					['mousedown', 'mouseup', 'click'].forEach(eventType => {
+					# 						const event = new MouseEvent(eventType, {
+					# 							view: window,
+					# 							bubbles: true,
+					# 							cancelable: true,
+					# 							buttons: 1,
+					# 							clientX: x,
+					# 							clientY: y
+					# 						});
+					# 						element.dispatchEvent(event);
+					# 					});
+					# 				}
+
+					# 				// Restore pointer events
+					# 				elements.forEach(el => {
+					# 					if (el !== element) {
+					# 						el.style.pointerEvents = '';
+					# 					}
+					# 				});
+					# 			}
+					# 		}''', element_node.xpath)
+					# 	)
 
 		except URLNotAllowedError as e:
 			raise e
