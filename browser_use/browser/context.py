@@ -899,7 +899,6 @@ class BrowserContext:
 		try:
 			if isinstance(current_frame, FrameLocator):
 				element_handle = await current_frame.locator(css_selector).element_handle()
-				await element_handle.inner_html() # fix? for: Element not clickable with index - most likely the page changed
 				return element_handle
 			else:
 				# Try to scroll into view if hidden
